@@ -1,6 +1,4 @@
 package com.epologee.puremvc.model {
-	import nl.rocketsciencestudios.club15.model.constants.EnvironmentNames;
-
 	import com.epologee.application.loaders.LoaderEvent;
 	import com.epologee.application.loaders.LoaderItem;
 	import com.epologee.application.loaders.LoaderQueue;
@@ -37,10 +35,12 @@ package com.epologee.puremvc.model {
 		private var _preloaded : Array;
 		private var _versionHash : String;
 		private var _initializationProcess : Process;
+		private var _preloadNames : Array;
 
-		public function EnvironmentProxy(inTimeline : DisplayObjectContainer, inVersionHash : String, inEnvironmentURL : String = null) {
+		public function EnvironmentProxy(inTimeline : DisplayObjectContainer, inVersionHash : String, inPreloadNames : Array = null, inEnvironmentURL : String = null) {
 			super(NAME);
 
+			_preloadNames = inPreloadNames;
 			_timeline = inTimeline;
 			_versionHash = inVersionHash;
 			_loaderURL = inTimeline.loaderInfo.loaderURL;
@@ -85,8 +85,9 @@ package com.epologee.puremvc.model {
 		public function initialize(inCallback : Function) : void {
 			_initializationProcess ||= new Process("initialization");
 			_initializationProcess.addCallback(inCallback);
-			if (!_initializationProcess.start()) return;
-			
+			if (!_initializationProcess.start())
+				return;
+
 			var loader : XMLLoaderItem = new XMLLoaderItem(getValueByName(NAME), handleLoaderComplete, null, true);
 			loader.addEventListener(LoaderEvent.ERROR, handleLoaderComplete);
 		}
@@ -101,43 +102,67 @@ package com.epologee.puremvc.model {
 		}
 
 		private function handleLoaderComplete(event : LoaderEvent) : void {
-			try {
-				clearListeners(event.target);
+			clearListeners(event.target);
 
-				var environment : XML = XMLLoaderItem(event.item).responseAsXML;
-				var filteredValues : XML = <values />;
+			var environment : XML = XMLLoaderItem(event.item).responseAsXML;
+			var filteredValues : XML = <values />;
 
-				// Values outside of <group> tags are shared in all environments:
-				var sharedValues : XMLList = environment.value;
-				if (sharedValues && sharedValues.length()) {
-					filteredValues.appendChild(sharedValues);
-				}
-
-				// Values within <group> tags are only used if the group corresponds with the required mode:
-				var domain : String = getEnvironmentDomain();
-				var groupedValues : XMLList = environment.group.(@domain == domain).value;
-
-				if (!groupedValues.length()) {
-					warn("Could not find a group for domain [" + domain + "], defaulting to [" + LOCALHOST + "] in " + _loaderURL);
-					groupedValues = environment.group.(@domain == LOCALHOST).value;
-				} else {
-					info("Using environment domain [" + domain + "] in " + _loaderURL);
-				}
-
-				if (groupedValues.length()) {
-					filteredValues.appendChild(groupedValues);
-				}
-
-				var values : XMLList = filteredValues.children();
-				for each (var valueNode : XML in values) {
-					var value : EnvironmentValueVO = new EnvironmentValueVO();
-					value.parseXML(valueNode);
-					_environment[value.name] = value;
-				}
-
-				preloadXML();
-			} catch(error : Error) {
+			// Values outside of <group> tags are shared in all environments:
+			var sharedValues : XMLList = environment.value;
+			if (sharedValues && sharedValues.length()) {
+				filteredValues.appendChild(sharedValues);
 			}
+
+			// Values within <group> tags are only used if the group corresponds with the required mode:
+			var domain : String = getEnvironmentDomain();
+			var groupedValues : XMLList = getGroupedValues(environment.group, domain);
+
+			if (groupedValues.length()) {
+				filteredValues.appendChild(groupedValues);
+			}
+
+			var values : XMLList = filteredValues.children();
+			for each (var valueNode : XML in values) {
+				var value : EnvironmentValueVO = new EnvironmentValueVO();
+				value.parseXML(valueNode);
+				_environment[value.name] = value;
+			}
+
+			if (_preloadNames) {
+				preloadXML();
+			} else {
+				_initializationProcess.finish();
+			}
+		}
+
+		private function getGroupedValues(inGroups : XMLList, inDomain : String) : XMLList {
+			if (!inGroups)
+				return null;
+
+			var groupedValues : XMLList;
+			var localhost : XMLList;
+			
+			var leni : int = inGroups.length();
+			for (var i : int = 0; i < leni ; i++) {
+				var group : XML = inGroups[i] as XML;
+				var domains : Array = String(group.@domain).split(",");
+				for each (var domain : String in domains) {
+					if (domain == inDomain) {
+						info("Using environment domain [" + domains + "] in " + _loaderURL);
+						groupedValues = group.value;
+						break;
+					} else if (domain == LOCALHOST) {
+						localhost = group.value;
+					}
+				}
+			}
+
+			if (!groupedValues) {
+				warn("Could not find a group for domain [" + domain + "], defaulting to [" + LOCALHOST + "] in " + _loaderURL);
+				groupedValues = localhost;
+			}
+
+			return groupedValues;
 		}
 
 		private function preloadXML() : void {
@@ -147,7 +172,9 @@ package com.epologee.puremvc.model {
 			preloadQueue.addEventListener(LoaderEvent.ERROR, handleLoaderError);
 			//
 			// XMLs:
-			preloadQueue.addXMLRequest(getValueByName(EnvironmentNames.TEXT), EnvironmentNames.TEXT);
+			for each (var preloadName : String in _preloadNames) {
+				preloadQueue.addXMLRequest(getValueByName(preloadName), preloadName);
+			}
 		}
 
 		private function handlePreloadElementComplete(event : LoaderEvent) : void {
@@ -177,7 +204,6 @@ package com.epologee.puremvc.model {
 			var domain : RegExp = new RegExp("http:\/\/(?:www\.)?([^\/]+)", "i");
 			var result : Array = _loaderURL.match(domain);
 
-			info("getEnvironmentDomain:\n" + result.join("\n"));
 			// if (!result) {
 			// /** TODO: There must be a way to do this in ONE regexp. :S */
 			// domain = new RegExp("(?<=http:\/\/)([^/]*)", "i");
