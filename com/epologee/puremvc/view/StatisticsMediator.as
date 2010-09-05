@@ -1,7 +1,7 @@
 package com.epologee.puremvc.view {
 	import com.epologee.navigator.integration.puremvc.NavigationProxy;
-	import com.epologee.navigator.states.IHasStateUpdate;
-	import com.epologee.navigator.states.NavigationState;
+	import com.epologee.navigator.behaviors.IHasStateUpdate;
+	import com.epologee.navigator.NavigationState;
 	import com.epologee.puremvc.analytics.GoogleAnalyticsProxy;
 
 	import org.puremvc.as3.multicore.patterns.mediator.Mediator;
