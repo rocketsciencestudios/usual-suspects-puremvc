@@ -51,7 +51,7 @@ package com.epologee.puremvc.model {
 			debug("Loading environment url: " + getValueByName(NAME));
 		}
 
-		public function getValueByName(inName : String) : String {
+		public function getValueByName(inName : String, inAppendVariables:Object = null) : String {
 			var value : EnvironmentValueVO = _environment[inName] as EnvironmentValueVO;
 
 			if (!value) {
@@ -64,7 +64,20 @@ package com.epologee.puremvc.model {
 				return value.value;
 			}
 
-			return value.suffixValueWithHash(_versionHash);
+			var suffix : String = "";
+			
+			if (inAppendVariables) {
+				for (var key : String in inAppendVariables) {
+					suffix += key +"="+ escape(inAppendVariables[key]) + "&";
+				}
+				suffix = suffix.substring(0, suffix.length - 1);
+			}
+
+			if (value.hashCompatible) {
+				suffix += _versionHash;
+			}
+
+			return value.suffixURL(suffix);
 		}
 
 		public function getParameterByName(inName : String) : String {

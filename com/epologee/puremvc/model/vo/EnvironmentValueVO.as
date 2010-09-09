@@ -27,7 +27,11 @@ package com.epologee.puremvc.model.vo {
 		public function parseXML(inXML : XML) : void {
 			name = inXML.@name;
 			_value = inXML;
+			
+			// isURL defaults to true
 			isURL = (inXML.@isurl != "false");
+			
+			// hashCompatible defaults to false
 			hashCompatible = (inXML.@hash == "true");
 		}
 
@@ -35,15 +39,16 @@ package com.epologee.puremvc.model.vo {
 			return _value;
 		}
 
-		public function suffixValueWithHash(inHash : String):String {
-			if (!hashCompatible)
+		public function suffixURL(inSuffix : String):String {
+			if (!inSuffix || !inSuffix.length) {
 				return _value;
-
+			}
+				
 			if (_value.indexOf("?") >= 0) {
-				return _value + "&" + inHash;
+				return _value + "&" + inSuffix;
 			}
 
-			return _value + "?" + inHash;
+			return _value + "?" + inSuffix;
 		}
 	}
 }
