@@ -1,4 +1,4 @@
-package nl.rocketsciencestudios.club15.model {
+package com.epologee.puremvc.model {
 	import com.epologee.audio.AudioEngine;
 	import com.epologee.audio.AudioEvent;
 	import com.epologee.audio.IAudioSample;

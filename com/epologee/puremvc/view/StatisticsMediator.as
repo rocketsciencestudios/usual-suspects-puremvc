@@ -1,14 +1,11 @@
 package com.epologee.puremvc.view {
-	import com.epologee.development.logging.warn;
 	import com.epologee.navigator.NavigationState;
 	import com.epologee.navigator.behaviors.IHasStateUpdate;
 	import com.epologee.navigator.behaviors.NavigationBehaviors;
 	import com.epologee.navigator.integration.puremvc.NavigationProxy;
-	import com.epologee.puremvc.analytics.GoogleAnalyticsProxy;
-
-	import org.puremvc.as3.multicore.patterns.mediator.Mediator;
-
+	import com.epologee.puremvc.model.GoogleAnalyticsProxy;
 	import flash.utils.getQualifiedClassName;
+	import org.puremvc.as3.multicore.patterns.mediator.Mediator;
 
 	/**
 	 * @author Eric-Paul Lecluse (c) epologee.com

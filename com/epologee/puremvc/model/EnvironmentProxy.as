@@ -1,14 +1,10 @@
 package com.epologee.puremvc.model {
+	import nl.rocketsciencestudios.RSSVersion;
 	import com.epologee.application.loaders.LoaderEvent;
 	import com.epologee.application.loaders.LoaderItem;
 	import com.epologee.application.loaders.LoaderQueue;
 	import com.epologee.application.loaders.XMLLoaderItem;
 	import com.epologee.application.preloader.IPreloadable;
-	import com.epologee.development.logging.debug;
-	import com.epologee.development.logging.error;
-	import com.epologee.development.logging.fatal;
-	import com.epologee.development.logging.info;
-	import com.epologee.development.logging.warn;
 	import com.epologee.process.Process;
 	import com.epologee.puremvc.model.vo.EnvironmentValueVO;
 
@@ -36,6 +32,7 @@ package com.epologee.puremvc.model {
 		private var _versionHash : String;
 		private var _initializationProcess : Process;
 		private var _preloadNames : Array;
+		private var _domain : String;
 
 		public function EnvironmentProxy(inTimeline : DisplayObjectContainer, inVersionHash : String, inPreloadNames : Array = null, inEnvironmentURL : String = null) {
 			super(NAME);
@@ -51,7 +48,11 @@ package com.epologee.puremvc.model {
 			debug("Loading environment url: " + getValueByName(NAME));
 		}
 
-		public function getValueByName(inName : String, inAppendVariables:Object = null) : String {
+		public function get domain() : String {
+			return _domain;
+		}
+
+		public function getValueByName(inName : String, inAppendVariables : Object = null) : String {
 			var value : EnvironmentValueVO = _environment[inName] as EnvironmentValueVO;
 
 			if (!value) {
@@ -65,10 +66,10 @@ package com.epologee.puremvc.model {
 			}
 
 			var suffix : String = "";
-			
+
 			if (inAppendVariables) {
 				for (var key : String in inAppendVariables) {
-					suffix += key +"="+ escape(inAppendVariables[key]) + "&";
+					suffix += key + "=" + escape(inAppendVariables[key]) + "&";
 				}
 				suffix = suffix.substring(0, suffix.length - 1);
 			}
@@ -78,6 +79,13 @@ package com.epologee.puremvc.model {
 			}
 
 			return value.suffixURL(suffix);
+		}
+
+		public function getURLRequestByName(inName : String, inAppendVariables : Object = null) : URLRequest {
+			var url : String = getValueByName(inName, inAppendVariables);
+			if (url == "") return null;
+
+			return new URLRequest(url);
 		}
 
 		public function getParameterByName(inName : String) : String {
@@ -109,8 +117,8 @@ package com.epologee.puremvc.model {
 			return 1024;
 		}
 
-		public function navigateToByName(inName : String, inWindow : String = "_blank") : void {
-			var request : URLRequest = new URLRequest(getValueByName(inName));
+		public function navigateToByName(inName : String, inWindow : String = "_blank", inAppendVariables : Object = null) : void {
+			var request : URLRequest = new URLRequest(getValueByName(inName, inAppendVariables));
 			navigateToURL(request, inWindow);
 		}
 
@@ -127,8 +135,8 @@ package com.epologee.puremvc.model {
 			}
 
 			// Values within <group> tags are only used if the group corresponds with the required mode:
-			var domain : String = getEnvironmentDomain();
-			var groupedValues : XMLList = getGroupedValues(environment.group, domain);
+			_domain = getEnvironmentDomain();
+			var groupedValues : XMLList = getGroupedValues(environment.group, _domain);
 
 			if (groupedValues.length()) {
 				filteredValues.appendChild(groupedValues);
@@ -154,14 +162,14 @@ package com.epologee.puremvc.model {
 
 			var groupedValues : XMLList;
 			var localhost : XMLList;
-			
+
 			var leni : int = inGroups.length();
 			for (var i : int = 0; i < leni ; i++) {
 				var group : XML = inGroups[i] as XML;
 				var domains : Array = String(group.@domain).split(",");
 				for each (var domain : String in domains) {
 					if (domain == inDomain) {
-						info("Using environment domain [" + domains + "] in " + _loaderURL);
+						info(RSSVersion.HASH + " Using environment domain ["+domains+"] in "+_loaderURL);
 						groupedValues = group.value;
 						break;
 					} else if (domain == LOCALHOST) {
