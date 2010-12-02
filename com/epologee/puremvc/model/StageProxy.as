@@ -1,5 +1,4 @@
 package com.epologee.puremvc.model {
-	import com.epologee.util.ShortcutManager;
 	import com.epologee.util.stage.StageSettings;
 
 	import org.puremvc.as3.multicore.patterns.proxy.Proxy;
@@ -98,7 +97,6 @@ package com.epologee.puremvc.model {
 			_timeline.stage.addEventListener(Event.RESIZE, handleStageResize);
 			_dimensions.x = _timeline.stage.stageWidth;
 			_dimensions.y = _timeline.stage.stageHeight;
-			ShortcutManager.setStage(_timeline.stage);
 			
 			frameRate = 24;
 		}

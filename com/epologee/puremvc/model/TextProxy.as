@@ -1,10 +1,7 @@
 package com.epologee.puremvc.model {
-	import nl.rocketsciencestudios.club15.model.constants.Languages;
-	import nl.rocketsciencestudios.club15.model.constants.EnvironmentParameters;
-	import nl.rocketsciencestudios.club15.model.constants.EnvironmentNames;
+	import nl.rocketsciencestudios.adidas.constants.EnvironmentNames;
 
 	import com.epologee.application.loaders.XMLLoaderItem;
-	import com.epologee.development.logging.debug;
 	import com.epologee.puremvc.model.vo.TextVO;
 
 	import org.puremvc.as3.multicore.patterns.proxy.Proxy;
@@ -60,7 +57,7 @@ package com.epologee.puremvc.model {
 			_callback = inReadyCallback;
 			
 			var ep : EnvironmentProxy = EnvironmentProxy(facade.retrieveProxy(EnvironmentProxy.NAME));
-			var copydeckName : String = (ep.getParameterByName(EnvironmentParameters.LANGUAGE) == Languages.ENGLISH) ? EnvironmentNames.TEXT_EN : EnvironmentNames.TEXT_NL;
+			var copydeckName : String = EnvironmentNames.TEXT;
 			var preloaded : XMLLoaderItem = ep.getPreloadedByName(copydeckName) as XMLLoaderItem;
 			
 			parseXML(preloaded.responseAsXML);
